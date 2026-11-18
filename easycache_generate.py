@@ -9,7 +9,6 @@ import sys
 import warnings
 import json
 from time import time
-import portalocker
 
 warnings.filterwarnings('ignore')
 
@@ -37,7 +36,6 @@ from tqdm import tqdm
 
 from pathlib import Path
 import csv
-import time
 import pandas as pd
 import logging
 
@@ -937,6 +935,7 @@ def generate(args):
 
     if "t2v" in args.task or "t2i" in args.task:
         if args.prompt_csv is not None:
+            import time as _time
             logging.info("Creating WanT2V pipeline.")
             wan_t2v = wan.WanT2V(
                 config=cfg,
@@ -1016,7 +1015,7 @@ def generate(args):
             write_header = not eval_csv.exists() or eval_csv.stat().st_size == 0
 
             session_times: list[float] = []
-            batch_start_time = time.perf_counter()
+            batch_start_time = _time.perf_counter()
 
             with eval_csv.open("a", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -1049,7 +1048,7 @@ def generate(args):
                     if torch.cuda.is_available():
                         torch.cuda.reset_peak_memory_stats()
 
-                    t0 = time.perf_counter()
+                    t0 = _time.perf_counter()
                     try:
                         video = wan_t2v.generate(
                             str(row["upsampled_caption"]),
@@ -1070,7 +1069,7 @@ def generate(args):
                             )
                         raise
 
-                    elapsed = round(time.perf_counter() - t0, 3)
+                    elapsed = round(_time.perf_counter() - t0, 3)
                     session_times.append(elapsed)
 
                     vram_str = ""
@@ -1103,7 +1102,7 @@ def generate(args):
                         )
 
             if rank == 0:
-                total_elapsed = time.perf_counter() - batch_start_time
+                total_elapsed = _time.perf_counter() - batch_start_time
                 avg_final = (sum(session_times) / len(session_times)) if session_times else 0.0
                 logging.info("=" * 70)
                 logging.info(
@@ -1327,24 +1326,6 @@ def generate(args):
 
     time_cost["number_prompt"] = len(generation_time)
     time_cost["avg_cost_time"] = sum(generation_time) / (len(generation_time)) if len(generation_time) > 0 else 0
-
-    print(
-        f"GPU_Device:{time_cost['GPU_Device']}, number_prompt: {time_cost['number_prompt']}, avg_cost_time: {time_cost['avg_cost_time']}")
-    try:
-        with open(f"./{args.out_dir}/1time_cost.json", "a+") as f:
-            portalocker.lock(f, portalocker.LOCK_EX)
-            f.seek(0)
-            try:
-                existing_data = json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError):
-                existing_data = []
-            existing_data.append(time_cost)
-            f.seek(0)
-            f.truncate()
-            json.dump(existing_data, f, indent=4)
-    except Exception as e:
-        print(f"Error saving time cost data: {e}")
-
 
 if __name__ == "__main__":
     args = _parse_args()
