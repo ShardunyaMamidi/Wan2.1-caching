@@ -1,0 +1,5 @@
+python generate.py --task t2v-1.3B --size 832*480 --ckpt_dir ./Wan2.1-T2V-1.3B --offload_model True --t5_cpu --prompt_csv D:/videophy/data/videophy2_test/videophy2_test.csv --video_dir D:/videophy/gen_videos_baseline --eval_csv D:/videophy/gen_videos_baseline/eval_baseline.csv
+
+python teacache_generate.py --task t2v-1.3B --size 832*480 --ckpt_dir ./Wan2.1-T2V-1.3B --offload_model True --t5_cpu --prompt_csv D:/videophy/data/videophy2_test/videophy2_test.csv --video_dir D:/videophy/gen_videos_teacache --eval_csv D:/videophy/gen_videos_baseline/eval_teacache.csv
+
+python easycache_generate.py --task t2v-1.3B --size 832*480 --ckpt_dir ./Wan2.1-T2V-1.3B --offload_model True --t5_cpu --prompt_csv D:/videophy/data/videophy2_test/videophy2_test.csv --video_dir D:/videophy/gen_videos_easycache --eval_csv D:/videophy/gen_videos_baseline/eval_easycache.csv
